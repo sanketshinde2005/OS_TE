@@ -1,143 +1,87 @@
+// 3_3_fcfs_rr_gantt.c
 #include <stdio.h>
 
-struct process {
-    char name[5];
-    int arrival, burst, remaining, waiting, turnaround;
-};
+typedef struct {
+    int pid, at, bt, ct, tat, wt;
+} Process;
 
-// ---------- FCFS Scheduling ----------
-void FCFS(struct process p[], int n) {
-    int time = 0;
-    float totalWT = 0, totalTAT = 0;
-
-    // Sort by arrival time
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = i + 1; j < n; j++) {
-            if (p[i].arrival > p[j].arrival) {
-                struct process temp = p[i];
-                p[i] = p[j];
-                p[j] = temp;
-            }
-        }
-    }
-
-    printf("\nGANTT CHART:\n");
-    printf("_____________________________________\n|");
-
-    for (int i = 0; i < n; i++) {
-        if (time < p[i].arrival)
-            time = p[i].arrival;  // CPU idle
-        time += p[i].burst;
-        p[i].turnaround = time - p[i].arrival;
-        p[i].waiting = p[i].turnaround - p[i].burst;
-
-        totalWT += p[i].waiting;
-        totalTAT += p[i].turnaround;
-
-        printf(" %s |", p[i].name);
-    }
-
-    printf("\n_____________________________________\n0");
-    time = 0;
-    for (int i = 0; i < n; i++) {
-        if (time < p[i].arrival)
-            time = p[i].arrival;
-        time += p[i].burst;
-        printf("\t%d", time);
-    }
-
-    printf("\n\nAverage Waiting Time: %.2f", totalWT / n);
-    printf("\nAverage Turnaround Time: %.2f\n", totalTAT / n);
+void printGantt(int seq[], int times[], int n) {
+    printf("\nGANTT CHART:\n ");
+    for(int i=0;i<n;i++) printf("----");
+    printf("\n|");
+    for(int i=0;i<n;i++) printf(" P%d |",seq[i]);
+    printf("\n ");
+    for(int i=0;i<n;i++) printf("----");
+    printf("\n0");
+    for(int i=0;i<n;i++) printf("   %d",times[i]);
+    printf("\n");
 }
 
-// ---------- Round Robin Scheduling ----------
-void RoundRobin(struct process p[], int n, int quantum) {
-    int completed = 0, time = 0, i = 0;
-    float totalWT = 0, totalTAT = 0;
-    int done;
-
-    for (i = 0; i < n; i++) {
-        p[i].remaining = p[i].burst;
-        p[i].waiting = 0;
-        p[i].turnaround = 0;
+void FCFS(Process p[],int n){
+    int t=0,seq[n],times[n];
+    for(int i=0;i<n;i++){
+        if(t<p[i].at)t=p[i].at;
+        t+=p[i].bt;
+        p[i].ct=t;
+        p[i].tat=p[i].ct-p[i].at;
+        p[i].wt=p[i].tat-p[i].bt;
+        seq[i]=p[i].pid; times[i]=p[i].ct;
     }
+    float awt=0,atat=0;
+    printf("\nPID\tAT\tBT\tCT\tTAT\tWT\n");
+    for(int i=0;i<n;i++){
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\n",p[i].pid,p[i].at,p[i].bt,p[i].ct,p[i].tat,p[i].wt);
+        awt+=p[i].wt; atat+=p[i].tat;
+    }
+    printf("\nAverage WT=%.2f\nAverage TAT=%.2f\n",awt/n,atat/n);
+    printGantt(seq,times,n);
+}
 
-    printf("\nGANTT CHART:\n");
-    printf("_____________________________________\n|");
+void RoundRobin(Process p[],int n,int tq){
+    int rem[n],done=0,t=0,seq[100],times[100],idx=0;
+    for(int i=0;i<n;i++) rem[i]=p[i].bt;
 
-    while (1) {
-        done = 1;
-
-        for (i = 0; i < n; i++) {
-            if (p[i].remaining > 0 && p[i].arrival <= time) {
-                done = 0;
-
-                if (p[i].remaining > quantum) {
-                    time += quantum;
-                    p[i].remaining -= quantum;
-                    printf(" %s |", p[i].name);
-                } else {
-                    time += p[i].remaining;
-                    p[i].waiting = time - p[i].burst - p[i].arrival;
-                    p[i].turnaround = time - p[i].arrival;
-                    p[i].remaining = 0;
-                    printf(" %s |", p[i].name);
-
-                    totalWT += p[i].waiting;
-                    totalTAT += p[i].turnaround;
-                    completed++;
+    while(done<n){
+        for(int i=0;i<n;i++){
+            if(p[i].at<=t && rem[i]>0){
+                seq[idx]=p[i].pid;
+                if(rem[i]<=tq){
+                    t+=rem[i]; rem[i]=0; done++;
+                    p[i].ct=t;
+                    p[i].tat=p[i].ct-p[i].at;
+                    p[i].wt=p[i].tat-p[i].bt;
+                }else{
+                    rem[i]-=tq; t+=tq;
                 }
+                times[idx++]=t;
             }
         }
-
-        if (done == 1)
-            break;
     }
 
-    printf("\n_____________________________________\n0");
-
-    // Display rough time marks (not exact per segment but for visualization)
-    printf("\t%d\n", time);
-
-    printf("\nAverage Waiting Time: %.2f", totalWT / n);
-    printf("\nAverage Turnaround Time: %.2f\n", totalTAT / n);
+    float awt=0,atat=0;
+    printf("\nPID\tAT\tBT\tCT\tTAT\tWT\n");
+    for(int i=0;i<n;i++){
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\n",p[i].pid,p[i].at,p[i].bt,p[i].ct,p[i].tat,p[i].wt);
+        awt+=p[i].wt; atat+=p[i].tat;
+    }
+    printf("\nAverage WT=%.2f\nAverage TAT=%.2f\n",awt/n,atat/n);
+    printGantt(seq,times,idx);
 }
 
-// ---------- Main ----------
-int main() {
-    int n, choice, quantum = 2;
-    struct process p[10];
-
+int main(){
+    int n,ch;
     printf("Enter number of processes: ");
-    scanf("%d", &n);
-
-    for (int i = 0; i < n; i++) {
-        printf("Process name: ");
-        scanf("%s", p[i].name);
-        printf("Arrival time: ");
-        scanf("%d", &p[i].arrival);
-        printf("Burst time: ");
-        scanf("%d", &p[i].burst);
+    scanf("%d",&n);
+    Process p[n];
+    printf("Enter Arrival & Burst times:\n");
+    for(int i=0;i<n;i++){
+        printf("P%d: ",i+1);
+        scanf("%d%d",&p[i].at,&p[i].bt);
+        p[i].pid=i+1;
     }
-
-    do {
-        printf("\n\nMenu:\n1. FCFS\n2. Round Robin (Quantum = %d)\n3. Exit\nEnter your choice: ", quantum);
-        scanf("%d", &choice);
-
-        switch (choice) {
-            case 1:
-                FCFS(p, n);
-                break;
-            case 2:
-                RoundRobin(p, n, quantum);
-                break;
-            case 3:
-                printf("Exiting...\n");
-                break;
-            default:
-                printf("Invalid choice.\n");
-        }
-    } while (choice != 3);
-
-    return 0;
+    printf("\n1. FCFS\n2. Round Robin (Quantum=2)\n3. Exit\nEnter choice: ");
+    scanf("%d",&ch);
+    if(ch==1) FCFS(p,n);
+    else if(ch==2) RoundRobin(p,n,2);
+    else return 0;
 }

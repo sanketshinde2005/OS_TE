@@ -64,12 +64,12 @@ int main() {
         }
     }
     if (flag == 1) {
-        printf("\n✅ The system is in a SAFE STATE.\nSafe sequence: ");
+        printf("\nThe system is in a SAFE STATE.\nSafe sequence: ");
         for (i = 0; i < n; i++)
             printf("P%d ", safeSeq[i]);
         printf("\n");
     } else {
-        printf("\n❌ The system is in an UNSAFE STATE.\n");
+        printf("\nThe system is in an UNSAFE STATE.\n");
         printf("Processes that could not complete: ");
         for (i = 0; i < n; i++)
             if (finish[i] == 0)

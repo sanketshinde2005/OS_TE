@@ -9,21 +9,19 @@ add_entry() {
         echo "Record with ID $id already exists!"
         return
     fi
-
     echo "Enter Name:"
     read name
     echo "Enter Phone:"
     read phone
-
     echo "$id;$name;$phone" >> "$FILE"
-    echo "✅ Record added successfully!"
+    echo "Record added successfully!"
 }
 search_entry() {
     echo "Enter ID or Name or Phone to search:"
     read keyword
     result=$(grep -i "$keyword" "$FILE")
     if [ -z "$result" ]; then
-        echo "❌ No matching record found."
+        echo "No matching record found."
     else
         echo "Matching Record(s):"
         echo "$result" | column -t -s";"
@@ -34,9 +32,9 @@ remove_entry() {
     read id
     if grep -q "^$id;" "$FILE"; then
         grep -v "^$id;" "$FILE" > temp.txt && mv temp.txt "$FILE"
-        echo "🗑️ Record with ID $id removed."
+        echo "Record with ID $id removed."
     else
-        echo "❌ Record not found."
+        echo "Record not found."
     fi
 }
 while true; do
@@ -49,12 +47,11 @@ while true; do
     echo "================================"
     echo -n "Enter your choice [1-4]: "
     read choice
-
     case $choice in
         1) search_entry ;;
         2) add_entry ;;
         3) remove_entry ;;
-        4) echo "👋 Exiting Address Book. Bye!"; exit 0 ;;
+        4) echo "Exiting Address Book. Bye!"; exit 0 ;;
         *) echo "Invalid choice! Please enter 1-4." ;;
     esac
 done

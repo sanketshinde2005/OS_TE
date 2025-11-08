@@ -14,7 +14,7 @@ void *producer(void *arg) {
         pthread_mutex_lock(&mutex); // Lock counter access
 
         counter++;
-        printf("👨‍🍳 Mr. Simpson baked a pizza 🍕 | Total pizzas on counter: %d\n", counter);
+        printf("Mr. Simpson baked a pizza| Total pizzas on counter: %d\n", counter);
 
         pthread_mutex_unlock(&mutex); // Unlock counter
         sem_post(&full);              // Signal that pizza is available
@@ -28,7 +28,7 @@ void *consumer(void *arg) {
         pthread_mutex_lock(&mutex);  // Lock counter access
 
         counter--;
-        printf("😋 Joey ate a pizza 🍴 | Pizzas left on counter: %d\n", counter);
+        printf("Joey ate a pizza 🍴 | Pizzas left on counter: %d\n", counter);
 
         pthread_mutex_unlock(&mutex); // Unlock counter
         sem_post(&empty);             // Signal empty space available

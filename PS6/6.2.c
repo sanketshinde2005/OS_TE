@@ -1,159 +1,128 @@
-/*
-===============================================================================
-SPPU OS LAB Q6.2 - Page Replacement Algorithms
-Algorithms: Optimal (OPT) and Least Recently Used (LRU)
-Reference String: 1, 2, 3, 4, 1, 2, 5, 1, 1, 2, 3, 4, 5
-===============================================================================
-*/
+// ASSIGNMENT NO. : 6.2
+// ROLL NO. : 33127
+// Optimal and LRU Page Replacement Algorithms with fixed reference string
 
 #include <stdio.h>
+#include <stdlib.h>
 
-#define REF_SIZE 13
-int reference[REF_SIZE] = {1, 2, 3, 4, 1, 2, 5, 1, 1, 2, 3, 4, 5};
+#define MAX 20
 
-// ---------- Utility Function ----------
-int isInFrame(int frames[], int n, int page) {
-    for (int i = 0; i < n; i++)
-        if (frames[i] == page)
-            return 1;
-    return 0;
+void displayFrames(int frames[], int frameSize) {
+    printf("\n-------------\n|");
+    for (int i = 0; i < frameSize; i++) {
+        if (frames[i] == -1)
+            printf("   |");
+        else
+            printf(" %d |", frames[i]);
+    }
+    printf("\n-------------\n");
 }
 
-// ---------- LRU Page Replacement ----------
-void LRU(int framesCount) {
-    int frames[10], recent[10];
-    int pageFaults = 0;
+// Optimal Page Replacement
+void optimal(int pages[], int n, int frameSize) {
+    int frames[frameSize], faults = 0, hits = 0;
 
-    for (int i = 0; i < framesCount; i++) {
-        frames[i] = -1;
-        recent[i] = 0;
-    }
+    for (int i = 0; i < frameSize; i++) frames[i] = -1;
 
-    printf("\n===== LRU (Frame Size = %d) =====\n", framesCount);
+    printf("\n--- Optimal Page Replacement (Frame Size = %d) ---\n", frameSize);
 
-    for (int i = 0; i < REF_SIZE; i++) {
-        int page = reference[i];
-        int found = 0;
+    for (int i = 0; i < n; i++) {
+        int page = pages[i], flag = 0;
 
-        // If page already in frame
-        for (int j = 0; j < framesCount; j++) {
+        for (int j = 0; j < frameSize; j++) {
             if (frames[j] == page) {
-                found = 1;
-                recent[j] = i + 1; // update recency
+                hits++;
+                flag = 1;
+                printf("Page %d → Hit", page);
                 break;
             }
         }
 
-        if (!found) {
-            int pos = -1, min = 9999;
-            // Find least recently used page
-            for (int j = 0; j < framesCount; j++) {
-                if (frames[j] == -1) {
-                    pos = j;
-                    break;
-                }
+        if (!flag) {
+            int pos = -1, farthest = i + 1;
+            for (int j = 0; j < frameSize; j++) {
+                int k;
+                for (k = i + 1; k < n; k++)
+                    if (frames[j] == pages[k]) break;
+                if (k == n) { pos = j; break; }
+                if (k > farthest) { farthest = k; pos = j; }
+            }
+            if (pos == -1) pos = 0;
+
+            frames[pos] = page;
+            faults++;
+            printf("Page %d → Miss", page);
+        }
+
+        displayFrames(frames, frameSize);
+    }
+
+    printf("\nTotal Page Faults: %d", faults);
+    printf("\nTotal Page Hits: %d", hits);
+    printf("\nHit Ratio = %.2f", (float)hits / n);
+    printf("\nMiss Ratio = %.2f\n", (float)faults / n);
+}
+
+// LRU Page Replacement
+void lru(int pages[], int n, int frameSize) {
+    int frames[frameSize], recent[frameSize], time = 0, faults = 0, hits = 0;
+
+    for (int i = 0; i < frameSize; i++) {
+        frames[i] = -1;
+        recent[i] = 0;
+    }
+
+    printf("\n--- LRU Page Replacement (Frame Size = %d) ---\n", frameSize);
+
+    for (int i = 0; i < n; i++) {
+        int page = pages[i], flag = 0;
+
+        for (int j = 0; j < frameSize; j++) {
+            if (frames[j] == page) {
+                hits++;
+                recent[j] = ++time;
+                flag = 1;
+                printf("Page %d → Hit", page);
+                break;
+            }
+        }
+
+        if (!flag) {
+            int pos = 0, min = recent[0];
+            for (int j = 1; j < frameSize; j++) {
                 if (recent[j] < min) {
                     min = recent[j];
                     pos = j;
                 }
             }
             frames[pos] = page;
-            recent[pos] = i + 1;
-            pageFaults++;
+            recent[pos] = ++time;
+            faults++;
+            printf("Page %d → Miss", page);
         }
 
-        printf("Step %2d: ", i + 1);
-        for (int k = 0; k < framesCount; k++) {
-            if (frames[k] == -1)
-                printf("- ");
-            else
-                printf("%d ", frames[k]);
-        }
-        printf(found ? "✅ (Hit)\n" : "❌ (Fault)\n");
+        displayFrames(frames, frameSize);
     }
 
-    printf("\nTotal Page Faults (LRU, Frames=%d): %d\n", framesCount, pageFaults);
+    printf("\nTotal Page Faults: %d", faults);
+    printf("\nTotal Page Hits: %d", hits);
+    printf("\nHit Ratio = %.2f", (float)hits / n);
+    printf("\nMiss Ratio = %.2f\n", (float)faults / n);
 }
 
-// ---------- Optimal Page Replacement ----------
-void Optimal(int framesCount) {
-    int frames[10];
-    int pageFaults = 0;
-
-    for (int i = 0; i < framesCount; i++)
-        frames[i] = -1;
-
-    printf("\n===== OPTIMAL (Frame Size = %d) =====\n", framesCount);
-
-    for (int i = 0; i < REF_SIZE; i++) {
-        int page = reference[i];
-        int found = isInFrame(frames, framesCount, page);
-
-        if (!found) {
-            int pos = -1, farthest = i + 1, idx = -1;
-
-            // If an empty slot is available
-            for (int j = 0; j < framesCount; j++) {
-                if (frames[j] == -1) {
-                    pos = j;
-                    break;
-                }
-            }
-
-            // If no empty frame, replace page that is used farthest in future
-            if (pos == -1) {
-                int farthestDist = -1;
-                for (int j = 0; j < framesCount; j++) {
-                    int nextUse = -1;
-                    for (int k = i + 1; k < REF_SIZE; k++) {
-                        if (frames[j] == reference[k]) {
-                            nextUse = k;
-                            break;
-                        }
-                    }
-                    if (nextUse == -1) {
-                        pos = j; // never used again
-                        break;
-                    }
-                    if (nextUse > farthestDist) {
-                        farthestDist = nextUse;
-                        pos = j;
-                    }
-                }
-            }
-
-            frames[pos] = page;
-            pageFaults++;
-        }
-
-        printf("Step %2d: ", i + 1);
-        for (int k = 0; k < framesCount; k++) {
-            if (frames[k] == -1)
-                printf("- ");
-            else
-                printf("%d ", frames[k]);
-        }
-        printf(found ? "✅ (Hit)\n" : "❌ (Fault)\n");
-    }
-
-    printf("\nTotal Page Faults (OPT, Frames=%d): %d\n", framesCount, pageFaults);
-}
-
-// ---------- Main Function ----------
+// Main Function
 int main() {
-    printf("SPPU OS LAB Q6.2 - Page Replacement Algorithms\n");
-    printf("Reference String: ");
-    for (int i = 0; i < REF_SIZE; i++)
-        printf("%d ", reference[i]);
+    int pages[] = {1, 2, 3, 4, 1, 2, 5, 1, 1, 2, 3, 4, 5};
+    int n = sizeof(pages) / sizeof(pages[0]);
+
+    printf("Fixed Page Reference String:\n");
+    for (int i = 0; i < n; i++) printf("%d ", pages[i]);
     printf("\n");
 
-    // For frame size = 3
-    Optimal(3);
-    LRU(3);
-
-    // For frame size = 4
-    Optimal(4);
-    LRU(4);
+    optimal(pages, n, 3);
+    lru(pages, n, 3);
+    optimal(pages, n, 4);
+    lru(pages, n, 4);
 
     return 0;
 }

@@ -1,160 +1,154 @@
-/*
-===============================================================================
-SPPU OS LAB Q6.1 - Page Replacement Algorithms
-Simulate FIFO and LRU algorithms for random page-reference strings.
-===============================================================================
-*/
+// ASSIGNMENT NO. : 6.1
+// ROLL NO. : 33127
+// FIFO (FCFS) and LRU Page Replacement Algorithms with random page reference string
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX_PAGES 20
-#define MAX_FRAMES 7
+#define MAX 50
 
-// ---------- Function to generate random page reference string ----------
-void generateReferenceString(int pages[], int n) {
-    for (int i = 0; i < n; i++) {
-        pages[i] = rand() % 10; // pages range from 0 to 9
+// Function to display current frame status
+void displayFrames(int frames[], int frameSize) {
+    printf("\n-------------\n|");
+    for (int i = 0; i < frameSize; i++) {
+        if (frames[i] == -1)
+            printf("   |");
+        else
+            printf(" %d |", frames[i]);
     }
+    printf("\n-------------\n");
 }
 
-// ---------- Function to print page reference string ----------
-void printReferenceString(int pages[], int n) {
-    printf("\nPage Reference String:\n");
-    for (int i = 0; i < n; i++)
-        printf("%d ", pages[i]);
-    printf("\n");
-}
+// FIFO Algorithm
+void fifo(int pages[], int n, int frameSize) {
+    int frames[frameSize], front = 0, faults = 0, hits = 0;
 
-// ---------- FIFO Page Replacement ----------
-int FIFO(int pages[], int n, int frames) {
-    int queue[MAX_FRAMES], front = 0, rear = 0, count = 0;
-    int pageFaults = 0, found;
+    for (int i = 0; i < frameSize; i++)
+        frames[i] = -1;
 
-    for (int i = 0; i < frames; i++)
-        queue[i] = -1;
-
-    printf("\nFIFO Simulation:\n");
+    printf("\n--- FIFO (FCFS) Page Replacement ---\n");
 
     for (int i = 0; i < n; i++) {
-        found = 0;
-        for (int j = 0; j < frames; j++) {
-            if (queue[j] == pages[i]) {
-                found = 1;
+        int page = pages[i], flag = 0;
+
+        for (int j = 0; j < frameSize; j++) {
+            if (frames[j] == page) {
+                hits++;
+                flag = 1;
+                printf("Page %d → Hit", page);
                 break;
             }
         }
 
-        if (!found) {
-            queue[rear] = pages[i];
-            rear = (rear + 1) % frames;
-            pageFaults++;
-
-            printf("Page %d caused a page fault: ", pages[i]);
-            for (int k = 0; k < frames; k++) {
-                if (queue[k] != -1)
-                    printf("%d ", queue[k]);
-                else
-                    printf("- ");
-            }
-            printf("\n");
-        } else {
-            printf("Page %d found in frame. No fault.\n", pages[i]);
+        if (!flag) {
+            frames[front] = page;
+            front = (front + 1) % frameSize;
+            faults++;
+            printf("Page %d → Miss", page);
         }
+
+        displayFrames(frames, frameSize);
     }
 
-    return pageFaults;
+    printf("\nTotal Page Faults: %d", faults);
+    printf("\nTotal Page Hits: %d", hits);
+    printf("\nHit Ratio = %.2f", (float)hits / n);
+    printf("\nMiss Ratio = %.2f", (float)faults / n);
+    printf("\nHit %% = %.2f%%", ((float)hits / n) * 100);
+    printf("\nMiss %% = %.2f%%\n", ((float)faults / n) * 100);
 }
 
-// ---------- LRU Page Replacement ----------
-int LRU(int pages[], int n, int frames) {
-    int memory[MAX_FRAMES], recent[MAX_FRAMES];
-    int pageFaults = 0;
+// LRU Algorithm
+void lru(int pages[], int n, int frameSize) {
+    int frames[frameSize], recent[frameSize], time = 0, faults = 0, hits = 0;
 
-    for (int i = 0; i < frames; i++) {
-        memory[i] = -1;
+    for (int i = 0; i < frameSize; i++) {
+        frames[i] = -1;
         recent[i] = 0;
     }
 
-    printf("\nLRU Simulation:\n");
+    printf("\n--- LRU Page Replacement ---\n");
 
     for (int i = 0; i < n; i++) {
-        int page = pages[i];
-        int found = 0;
+        int page = pages[i], flag = 0;
 
-        // Check if page is already in memory
-        for (int j = 0; j < frames; j++) {
-            if (memory[j] == page) {
-                found = 1;
-                recent[j] = i + 1; // Update recency
+        for (int j = 0; j < frameSize; j++) {
+            if (frames[j] == page) {
+                hits++;
+                recent[j] = ++time;
+                flag = 1;
+                printf("Page %d → Hit", page);
                 break;
             }
         }
 
-        if (!found) {
-            int pos = -1, min = 9999;
-            // Find the least recently used page
-            for (int j = 0; j < frames; j++) {
-                if (memory[j] == -1) {
-                    pos = j;
-                    break;
-                }
+        if (!flag) {
+            int minIndex = 0, min = recent[0];
+            for (int j = 1; j < frameSize; j++) {
                 if (recent[j] < min) {
                     min = recent[j];
-                    pos = j;
+                    minIndex = j;
                 }
             }
-
-            memory[pos] = page;
-            recent[pos] = i + 1;
-            pageFaults++;
-
-            printf("Page %d caused a page fault: ", page);
-            for (int k = 0; k < frames; k++) {
-                if (memory[k] != -1)
-                    printf("%d ", memory[k]);
-                else
-                    printf("- ");
-            }
-            printf("\n");
-        } else {
-            printf("Page %d found in frame. No fault.\n", page);
+            frames[minIndex] = page;
+            recent[minIndex] = ++time;
+            faults++;
+            printf("Page %d → Miss", page);
         }
+
+        displayFrames(frames, frameSize);
     }
 
-    return pageFaults;
+    printf("\nTotal Page Faults: %d", faults);
+    printf("\nTotal Page Hits: %d", hits);
+    printf("\nHit Ratio = %.2f", (float)hits / n);
+    printf("\nMiss Ratio = %.2f", (float)faults / n);
+    printf("\nHit %% = %.2f%%", ((float)hits / n) * 100);
+    printf("\nMiss %% = %.2f%%\n", ((float)faults / n) * 100);
 }
 
-// ---------- Main Function ----------
+// Main Function
 int main() {
-    srand(time(NULL));
+    int n, frameSize, choice;
+    int pages[MAX];
 
-    int n, frames;
-    int pages[MAX_PAGES];
+    srand(time(0));
 
-    printf("Enter number of pages in reference string (<= 20): ");
+    printf("Enter number of pages (e.g., 10–20): ");
     scanf("%d", &n);
-    printf("Enter number of frames (1 to 7): ");
-    scanf("%d", &frames);
 
-    generateReferenceString(pages, n);
-    printReferenceString(pages, n);
+    printf("Generated Random Page Reference String:\n");
+    for (int i = 0; i < n; i++) {
+        pages[i] = rand() % 10; // random 0–9
+        printf("%d ", pages[i]);
+    }
 
-    int fifoFaults = FIFO(pages, n, frames);
-    int lruFaults = LRU(pages, n, frames);
+    printf("\nEnter Frame Size (1–7): ");
+    scanf("%d", &frameSize);
 
-    printf("\n==========================================");
-    printf("\nTotal Page Faults (FIFO): %d", fifoFaults);
-    printf("\nTotal Page Faults (LRU) : %d", lruFaults);
-    printf("\n==========================================\n");
+    do {
+        printf("\n===== PAGE REPLACEMENT MENU =====");
+        printf("\n1. FIFO");
+        printf("\n2. LRU");
+        printf("\n3. Exit");
+        printf("\nEnter your choice: ");
+        scanf("%d", &choice);
 
-    if (fifoFaults < lruFaults)
-        printf("➡️ FIFO performed better (fewer page faults).\n");
-    else if (fifoFaults > lruFaults)
-        printf("➡️ LRU performed better (fewer page faults).\n");
-    else
-        printf("➡️ Both algorithms performed equally.\n");
+        switch (choice) {
+        case 1:
+            fifo(pages, n, frameSize);
+            break;
+        case 2:
+            lru(pages, n, frameSize);
+            break;
+        case 3:
+            printf("Exiting...\n");
+            exit(0);
+        default:
+            printf("Invalid choice! Try again.\n");
+        }
+    } while (choice != 3);
 
     return 0;
 }

@@ -39,13 +39,13 @@ int isSafe() {
             break;
     }
     if (count == n) {
-        printf("\n✅ The system is in a SAFE STATE.\nSafe sequence: ");
+        printf("\nThe system is in a SAFE STATE.\nSafe sequence: ");
         for (int i = 0; i < n; i++)
             printf("P%d ", safeSeq[i]);
         printf("\n");
         return 1;
     } else {
-        printf("\n❌ The system is in an UNSAFE STATE.\n");
+        printf("\nThe system is in an UNSAFE STATE.\n");
         return 0;
     }
 }
@@ -58,13 +58,13 @@ void requestResources() {
         scanf("%d", &req[i]);
     for (int i = 0; i < m; i++) {
         if (req[i] > need[p][i]) {
-            printf("\n❌ Error: Process has exceeded its maximum claim.\n");
+            printf("\nError: Process has exceeded its maximum claim.\n");
             return;
         }
     }
     for (int i = 0; i < m; i++) {
         if (req[i] > avail[i]) {
-            printf("\n⚠️  Resources not available currently. Process must wait.\n");
+            printf("\nResources not available currently. Process must wait.\n");
             return;
         }
     }

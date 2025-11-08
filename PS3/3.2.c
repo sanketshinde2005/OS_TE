@@ -1,165 +1,95 @@
-/*
-===============================================================================
-SPPU OS LAB Q3.2 - CPU Scheduling Algorithms
-Algorithms: FCFS (Non-Preemptive) & SJF (Preemptive)
--------------------------------------------------------------------------------
-Calculates:
-- Average Waiting Time
-- Average Turnaround Time
-- Gantt Chart
-===============================================================================
-*/
-
+// 3_2_fcfs_sjf_preemptive_gantt.c
 #include <stdio.h>
-#include <limits.h>
 
-// Structure for process details
-struct process {
-    char name[5];
-    int arrival, burst, remaining;
-    int waiting, turnaround, completion;
-};
+typedef struct {
+    int pid, at, bt, rt, ct, tat, wt, completed;
+} Process;
 
-// ---------- FCFS Scheduling ----------
-void FCFS(struct process p[], int n) {
-    int time = 0;
-    float totalWT = 0, totalTAT = 0;
-
-    // Sort by arrival time
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = i + 1; j < n; j++) {
-            if (p[i].arrival > p[j].arrival) {
-                struct process temp = p[i];
-                p[i] = p[j];
-                p[j] = temp;
-            }
-        }
-    }
-
-    printf("\n===== FCFS Scheduling =====\n");
-    printf("GANTT CHART:\n");
-    printf("_____________________________________\n|");
-
-    for (int i = 0; i < n; i++) {
-        if (time < p[i].arrival)
-            time = p[i].arrival;  // CPU idle
-        time += p[i].burst;
-        p[i].completion = time;
-        p[i].turnaround = p[i].completion - p[i].arrival;
-        p[i].waiting = p[i].turnaround - p[i].burst;
-
-        totalWT += p[i].waiting;
-        totalTAT += p[i].turnaround;
-        printf(" %s |", p[i].name);
-    }
-
-    printf("\n_____________________________________\n0");
-    time = 0;
-    for (int i = 0; i < n; i++) {
-        if (time < p[i].arrival)
-            time = p[i].arrival;
-        time += p[i].burst;
-        printf("\t%d", time);
-    }
-
-    printf("\n\nAverage Waiting Time: %.2f", totalWT / n);
-    printf("\nAverage Turnaround Time: %.2f\n", totalTAT / n);
+void printGantt(int seq[], int times[], int count) {
+    printf("\nGANTT CHART:\n ");
+    for (int i = 0; i < count; i++) printf("----");
+    printf("\n|");
+    for (int i = 0; i < count; i++) printf(" P%d |", seq[i]);
+    printf("\n ");
+    for (int i = 0; i < count; i++) printf("----");
+    printf("\n0");
+    for (int i = 0; i < count; i++) printf("   %d", times[i]);
+    printf("\n");
 }
 
-// ---------- SJF (Preemptive / SRTF) Scheduling ----------
-void SJF_Preemptive(struct process p[], int n) {
-    int completed = 0, time = 0, minIndex;
-    float totalWT = 0, totalTAT = 0;
-    int isCompleted[n];
+void FCFS(Process p[], int n) {
+    int t = 0, seq[n], times[n];
     for (int i = 0; i < n; i++) {
-        isCompleted[i] = 0;
-        p[i].remaining = p[i].burst;
+        if (t < p[i].at) t = p[i].at;
+        t += p[i].bt;
+        p[i].ct = t;
+        p[i].tat = p[i].ct - p[i].at;
+        p[i].wt = p[i].tat - p[i].bt;
+        seq[i] = p[i].pid;
+        times[i] = p[i].ct;
     }
 
-    printf("\n===== SJF (Preemptive) Scheduling =====\n");
-    printf("GANTT CHART:\n");
-    printf("_____________________________________\n|");
+    float awt=0,atat=0;
+    printf("\nPID\tAT\tBT\tCT\tTAT\tWT\n");
+    for(int i=0;i<n;i++){
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\n",
+               p[i].pid,p[i].at,p[i].bt,p[i].ct,p[i].tat,p[i].wt);
+        awt+=p[i].wt; atat+=p[i].tat;
+    }
+    printf("\nAverage WT=%.2f\nAverage TAT=%.2f\n",awt/n,atat/n);
+    printGantt(seq,times,n);
+}
 
-    while (completed != n) {
-        int idx = -1;
-        int minBurst = INT_MAX;
+void SJF_Preemptive(Process p[], int n) {
+    int completed=0, time=0, seq[100], times[100], count=0, prev=-1;
+    for(int i=0;i<n;i++){p[i].rt=p[i].bt; p[i].completed=0;}
 
-        // Find process with minimum remaining time that has arrived
-        for (int i = 0; i < n; i++) {
-            if (p[i].arrival <= time && p[i].remaining > 0) {
-                if (p[i].remaining < minBurst) {
-                    minBurst = p[i].remaining;
-                    idx = i;
-                }
-                // Tie-breaking: earlier arrival
-                else if (p[i].remaining == minBurst && p[i].arrival < p[idx].arrival) {
-                    idx = i;
-                }
+    while(completed<n){
+        int idx=-1,min=9999;
+        for(int i=0;i<n;i++)
+            if(p[i].at<=time && !p[i].completed && p[i].rt<min && p[i].rt>0){
+                idx=i; min=p[i].rt;
             }
-        }
 
-        if (idx != -1) {
-            // Execute process for 1 unit time
-            p[idx].remaining--;
-            printf(" %s |", p[idx].name);
-            time++;
-
-            // If process completed
-            if (p[idx].remaining == 0) {
-                p[idx].completion = time;
-                p[idx].turnaround = p[idx].completion - p[idx].arrival;
-                p[idx].waiting = p[idx].turnaround - p[idx].burst;
-                totalWT += p[idx].waiting;
-                totalTAT += p[idx].turnaround;
-                isCompleted[idx] = 1;
+        if(idx!=-1){
+            if(prev!=idx){seq[count]=p[idx].pid; times[count++]=time; prev=idx;}
+            p[idx].rt--; time++;
+            if(p[idx].rt==0){
+                p[idx].completed=1;
+                p[idx].ct=time;
+                p[idx].tat=p[idx].ct-p[idx].at;
+                p[idx].wt=p[idx].tat-p[idx].bt;
                 completed++;
             }
-        } else {
-            // No process ready, CPU idle
-            time++;
-        }
+        }else time++;
     }
+    times[count]=time;
 
-    printf("\n_____________________________________\n");
-    printf("\nAverage Waiting Time: %.2f", totalWT / n);
-    printf("\nAverage Turnaround Time: %.2f\n", totalTAT / n);
+    float awt=0,atat=0;
+    printf("\nPID\tAT\tBT\tCT\tTAT\tWT\n");
+    for(int i=0;i<n;i++){
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\n",
+               p[i].pid,p[i].at,p[i].bt,p[i].ct,p[i].tat,p[i].wt);
+        awt+=p[i].wt; atat+=p[i].tat;
+    }
+    printf("\nAverage WT=%.2f\nAverage TAT=%.2f\n",awt/n,atat/n);
+    printGantt(seq,times,count);
 }
 
-// ---------- MAIN ----------
-int main() {
-    int n, choice;
-    struct process p[10];
-
+int main(){
+    int n,ch;
     printf("Enter number of processes: ");
-    scanf("%d", &n);
-
-    for (int i = 0; i < n; i++) {
-        printf("Process name: ");
-        scanf("%s", p[i].name);
-        printf("Arrival time: ");
-        scanf("%d", &p[i].arrival);
-        printf("Burst time: ");
-        scanf("%d", &p[i].burst);
+    scanf("%d",&n);
+    Process p[n];
+    printf("Enter Arrival & Burst times:\n");
+    for(int i=0;i<n;i++){
+        printf("P%d: ",i+1);
+        scanf("%d%d",&p[i].at,&p[i].bt);
+        p[i].pid=i+1;
     }
-
-    do {
-        printf("\n\nMenu:\n1. FCFS\n2. SJF (Preemptive)\n3. Exit\nEnter your choice: ");
-        scanf("%d", &choice);
-
-        switch (choice) {
-            case 1:
-                FCFS(p, n);
-                break;
-            case 2:
-                SJF_Preemptive(p, n);
-                break;
-            case 3:
-                printf("Exiting...\n");
-                break;
-            default:
-                printf("Invalid choice.\n");
-        }
-    } while (choice != 3);
-
-    return 0;
+    printf("\n1. FCFS\n2. SJF (Preemptive)\n3. Exit\nEnter choice: ");
+    scanf("%d",&ch);
+    if(ch==1) FCFS(p,n);
+    else if(ch==2) SJF_Preemptive(p,n);
+    else return 0;
 }

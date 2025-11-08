@@ -1,54 +1,40 @@
-#!/bin/bash
-# ======================================================
-# File Management Program (SPPU OS LAB 1.4)
-# Author: Sanket Shinde
-# ======================================================
-
-# ---------- FUNCTION DEFINITIONS ----------
-
 test_file() {
     echo "Enter filename to check:"
     read fname
     if [ -f "$fname" ]; then
-        echo "✅ File '$fname' exists."
+        echo "File '$fname' exists."
     else
-        echo "❌ File '$fname' does not exist."
+        echo "File '$fname' does not exist."
     fi
 }
-
 read_file() {
     echo "Enter filename to read:"
     read fname
     if [ -f "$fname" ]; then
-        echo "📖 Contents of '$fname':"
+        echo "Contents of '$fname':"
         echo "----------------------------------"
         cat "$fname"
         echo "----------------------------------"
     else
-        echo "❌ File '$fname' not found."
+        echo "File '$fname' not found."
     fi
 }
-
 delete_file() {
     echo "Enter filename to delete:"
     read fname
     if [ -f "$fname" ]; then
         rm -i "$fname"   # -i asks confirmation before deleting
-        echo "🗑️  File deleted (if confirmed)."
+        echo "File deleted (if confirmed)."
     else
-        echo "❌ File '$fname' not found."
+        echo "File '$fname' not found."
     fi
 }
-
 list_files() {
-    echo "📂 Files in current directory:"
+    echo "Files in current directory:"
     echo "----------------------------------"
     ls -lh --color=auto | awk '{print $9}' | tail -n +2
     echo "----------------------------------"
 }
-
-# ---------- MAIN MENU LOOP ----------
-
 while true; do
     echo ""
     echo "========= FILE MANAGEMENT MENU ========="
@@ -66,7 +52,7 @@ while true; do
         2) read_file ;;
         3) delete_file ;;
         4) list_files ;;
-        5) echo "👋 Exiting File Manager. Bye!"; exit 0 ;;
+        5) echo "Exiting File Manager. Bye!"; exit 0 ;;
         *) echo "Invalid choice! Please enter 1–5." ;;
     esac
 done

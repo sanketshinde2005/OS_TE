@@ -14,11 +14,11 @@ void *TA(void *arg) {
         sem_wait(&students);          // wait for a student to arrive
         pthread_mutex_lock(&mutex);   // access waiting count
         waiting--; // one student goes in for help
-        printf("🧑‍🏫 TA starts helping a student. Students waiting: %d\n", waiting);
+        printf("TA starts helping a student. Students waiting: %d\n", waiting);
         pthread_mutex_unlock(&mutex);
         sem_post(&ta); // signal TA is ready to help
         sleep(2);
-        printf("✅ TA finished helping the student and is now available.\n");
+        printf("TA finished helping the student and is now available.\n");
     }
 }
 void *student(void *arg) {
@@ -28,16 +28,16 @@ void *student(void *arg) {
         pthread_mutex_lock(&mutex);
         if (waiting < MAX_CHAIRS) {
             waiting++;
-            printf("👨‍🎓 Student %d is waiting. Waiting students: %d\n", id, waiting);
+            printf("Student %d is waiting. Waiting students: %d\n", id, waiting);
             pthread_mutex_unlock(&mutex);
             sem_post(&students); // notify TA that a student arrived
             sem_wait(&ta);       // wait until TA is ready
-            printf("💬 Student %d is getting help from TA.\n", id);
+            printf("Student %d is getting help from TA.\n", id);
             sleep(2); // being helped
-            printf("😄 Student %d got help and leaves.\n", id);
+            printf("Student %d got help and leaves.\n", id);
         } else {
             pthread_mutex_unlock(&mutex);
-            printf("🚶 Student %d found no empty chair and will come back later.\n", id);
+            printf("Student %d found no empty chair and will come back later.\n", id);
         }
     }
 }
