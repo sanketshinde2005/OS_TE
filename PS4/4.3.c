@@ -4,61 +4,61 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <time.h>
-#define FILENAME "shared_buffer.txt"
-pthread_mutex_t mutex;   // Mutual exclusion for file access
-sem_t can_produce;       // Binary semaphore – signals producer can write
-sem_t can_consume;       // Binary semaphore – signals consumer can read
-void *producer(void *arg) {
-    FILE *fp;
-    int num;
+#define FILE_NAME "shared.txt"
+pthread_mutex_t mutex;
+sem_t empty;  // file is empty — producer can write
+sem_t full;   // file is full — consumer can read
+void* producer(void* arg);
+void* consumer(void* arg);
+void* producer(void* arg) {
     while (1) {
-        sem_wait(&can_produce);          // Wait until allowed to produce
-        pthread_mutex_lock(&mutex);      // Lock file for writing
-        num = rand() % 10;               // Random integer (0–9)
-        fp = fopen(FILENAME, "w");       // Overwrite the file
+        sem_wait(&empty);
+        pthread_mutex_lock(&mutex);
+        int num = rand() % 10;
+        FILE* fp = fopen(FILE_NAME, "w");
         if (fp == NULL) {
             perror("Error opening file for writing");
             exit(1);
         }
-        fprintf(fp, "%d", num);
+        fprintf(fp, "%d\n", num);
         fclose(fp);
-        printf("👨‍🍳 Producer wrote number: %d\n", num);
-        pthread_mutex_unlock(&mutex);    // Unlock file
-        sem_post(&can_consume);          // Signal consumer
-        usleep((rand() % 101) * 1000)
+        printf("Producer: produced %d\n", num);
+        pthread_mutex_unlock(&mutex);
+        sem_post(&full);
+        usleep((rand() % 101) * 1000);
     }
+    return NULL;
 }
-void *consumer(void *arg) {
-    FILE *fp;
-    int num;
+void* consumer(void* arg) {
     while (1) {
-        sem_wait(&can_consume);          // Wait until data is ready
-        pthread_mutex_lock(&mutex);      // Lock file for reading
-        fp = fopen(FILENAME, "r");
+        sem_wait(&full);
+        pthread_mutex_lock(&mutex);
+        FILE* fp = fopen(FILE_NAME, "r");
         if (fp == NULL) {
             perror("Error opening file for reading");
             exit(1);
         }
+        int num;
         fscanf(fp, "%d", &num);
         fclose(fp);
-        printf("😋 Consumer read number: %d\n", num);
-        pthread_mutex_unlock(&mutex);    // Unlock file
-        sem_post(&can_produce);          // Signal producer to produce again
-        usleep(50000);                   // Sleep 50 ms (simulate processing)
+        printf("Consumer: consumed %d\n", num);
+        pthread_mutex_unlock(&mutex);
+        sem_post(&empty);
     }
+    return NULL;
 }
 int main() {
     srand(time(NULL));
-    pthread_t prod, cons;
+    pthread_t prodThread, consThread;
     pthread_mutex_init(&mutex, NULL);
-    sem_init(&can_produce, 0, 1); // Producer starts first
-    sem_init(&can_consume, 0, 0); // Consumer waits initially
-    pthread_create(&prod, NULL, producer, NULL);
-    pthread_create(&cons, NULL, consumer, NULL);
-    pthread_join(prod, NULL);
-    pthread_join(cons, NULL);
+    sem_init(&empty, 0, 1); // File initially empty
+    sem_init(&full, 0, 0);
+    pthread_create(&prodThread, NULL, producer, NULL);
+    pthread_create(&consThread, NULL, consumer, NULL);
+    pthread_join(prodThread, NULL);
+    pthread_join(consThread, NULL);
     pthread_mutex_destroy(&mutex);
-    sem_destroy(&can_produce);
-    sem_destroy(&can_consume);
+    sem_destroy(&empty);
+    sem_destroy(&full);
     return 0;
 }

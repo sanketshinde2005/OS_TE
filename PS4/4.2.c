@@ -1,64 +1,67 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
-#define MAX_CHAIRS 3   // chairs in the hallway
-#define MAX_STUDENTS 8 // total students to simulate
-sem_t students;        // counts waiting students
-sem_t ta;              // signals TA availability
-pthread_mutex_t mutex; // mutual exclusion for chairs
-int waiting = 0;       // number of students currently waiting
-void *TA(void *arg) {
+#define NUM_CHAIRS 3      // number of chairs in hallway
+#define NUM_STUDENTS 10   // number of students to simulate
+int waitingStudents = 0;
+sem_t students;     // students waiting for TA
+sem_t ta;           // TA ready to help
+pthread_mutex_t mutex;
+void* student(void* id);
+void* teaching_assistant(void* arg);
+void* student(void* id) {
+    int student_id = *(int*)id;
     while (1) {
-        sem_wait(&students);          // wait for a student to arrive
-        pthread_mutex_lock(&mutex);   // access waiting count
-        waiting--; // one student goes in for help
-        printf("TA starts helping a student. Students waiting: %d\n", waiting);
-        pthread_mutex_unlock(&mutex);
-        sem_post(&ta); // signal TA is ready to help
-        sleep(2);
-        printf("TA finished helping the student and is now available.\n");
-    }
-}
-void *student(void *arg) {
-    int id = *(int *)arg;
-    while (1) {
-        sleep(rand() % 5 + 1); // students arrive randomly
+        printf("Student %d is programming and may need help later.\n", student_id);
+        sleep(rand() % 5 + 1);  // random time before seeking help
         pthread_mutex_lock(&mutex);
-        if (waiting < MAX_CHAIRS) {
-            waiting++;
-            printf("Student %d is waiting. Waiting students: %d\n", id, waiting);
+        if (waitingStudents < NUM_CHAIRS) {
+            waitingStudents++;
+            printf("Student %d is waiting. Waiting students = %d.\n",
+                   student_id, waitingStudents);
+            sem_post(&students);
             pthread_mutex_unlock(&mutex);
-            sem_post(&students); // notify TA that a student arrived
-            sem_wait(&ta);       // wait until TA is ready
-            printf("Student %d is getting help from TA.\n", id);
-            sleep(2); // being helped
-            printf("Student %d got help and leaves.\n", id);
+            sem_wait(&ta);
+            printf("Student %d is getting help from TA.\n", student_id);
+            sleep(rand() % 3 + 1); // getting help
+            printf("Student %d is done with TA and going back to programming.\n", student_id);
         } else {
+            printf("No chair available. Student %d will come back later.\n", student_id);
             pthread_mutex_unlock(&mutex);
-            printf("Student %d found no empty chair and will come back later.\n", id);
         }
     }
+    return NULL;
+}
+void* teaching_assistant(void* arg) {
+    while (1) {
+        sem_wait(&students);
+        pthread_mutex_lock(&mutex);
+        waitingStudents--;
+        printf("TA is helping a student. Waiting students = %d.\n", waitingStudents);
+        pthread_mutex_unlock(&mutex);
+        sem_post(&ta);
+        sleep(rand() % 3 + 1);
+        printf("TA finished helping a student.\n");
+    }
+    return NULL;
 }
 int main() {
     srand(time(NULL));
-    pthread_t ta_thread;
-    pthread_t student_threads[MAX_STUDENTS];
-    int student_ids[MAX_STUDENTS];
+    pthread_t taThread;
+    pthread_t studentThreads[NUM_STUDENTS];
+    int student_ids[NUM_STUDENTS];
     sem_init(&students, 0, 0);
     sem_init(&ta, 0, 0);
     pthread_mutex_init(&mutex, NULL);
-    pthread_create(&ta_thread, NULL, TA, NULL);
-    for (int i = 0; i < MAX_STUDENTS; i++) {
+    pthread_create(&taThread, NULL, teaching_assistant, NULL);
+    for (int i = 0; i < NUM_STUDENTS; i++) {
         student_ids[i] = i + 1;
-        pthread_create(&student_threads[i], NULL, student, &student_ids[i]);
+        pthread_create(&studentThreads[i], NULL, student, &student_ids[i]);
     }
-    pthread_join(ta_thread, NULL);
-    for (int i = 0; i < MAX_STUDENTS; i++)
-        pthread_join(student_threads[i], NULL);
-    pthread_mutex_destroy(&mutex);
+    pthread_join(taThread, NULL);
     sem_destroy(&students);
     sem_destroy(&ta);
+    pthread_mutex_destroy(&mutex);
     return 0;
 }

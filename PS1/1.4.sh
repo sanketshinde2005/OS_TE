@@ -1,3 +1,4 @@
+#!/bin/bash
 test_file() {
     echo "Enter filename to check:"
     read fname

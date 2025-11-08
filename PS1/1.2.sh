@@ -1,3 +1,4 @@
+#!/bin/bash
 FILE="phonebook.txt"
 if [ ! -f "$FILE" ]; then
     touch "$FILE"

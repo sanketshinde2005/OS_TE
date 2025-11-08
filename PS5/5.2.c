@@ -74,9 +74,9 @@ void requestResources() {
         need[p][i] -= req[i];
     }
     if (isSafe()) {
-        printf("✅ Request can be GRANTED safely.\n");
+        printf("Request can be GRANTED safely.\n");
     } else {
-        printf("❌ Request CANNOT be granted (would lead to UNSAFE state).\n");
+        printf("Request CANNOT be granted (would lead to UNSAFE state).\n");
         for (int i = 0; i < m; i++) {
             avail[i] += req[i];
             alloc[p][i] -= req[i];

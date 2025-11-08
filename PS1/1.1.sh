@@ -1,3 +1,5 @@
+#!/bin/bash
+# Address Book Script
 FILE="address.txt"
 if [ ! -f "$FILE" ]; then
     touch "$FILE"
