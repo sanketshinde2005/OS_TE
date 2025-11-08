@@ -1,46 +1,44 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#define MAX 100
-struct msg_buffer {
+#include<stdio.h>
+#include<sys/ipc.h>
+#include<sys/msg.h>
+#include<string.h>
+#include<ctype.h>
+#include<stdlib.h>
+struct msg_buffer
+{
     long msg_type;
-    char msg_text[MAX];
-};
-void toUpperCase(char *str) {
-    for (int i = 0; str[i] != '\0'; i++)
-        str[i] = toupper(str[i]);
-}
-int main() {
+    char msg_text[100];
+}message;
+int main()
+{
     key_t key;
     int msgid;
-    struct msg_buffer message;
-    key = ftok("msgfile", 65);
-    if (key == -1) {
-        perror("ftok");
+    key=ftok("progfile",65);
+    msgid=msgget(key,0666 | IPC_CREAT);
+    if(msgid==-1)
+    {
+        perror("msgget failed");
         exit(1);
     }
-    msgid = msgget(key, 0666 | IPC_CREAT);
-    if (msgid == -1) {
-        perror("msgget");
-        exit(1);
-    }
-    printf("=== RECEIVER PROCESS ===\n\n");
-    while (1) {
-        if (msgrcv(msgid, &message, sizeof(message.msg_text), 0, 0) == -1) {
-            perror("msgrcv");
+    printf("Receiver Process Started...\n");
+    while(1)
+    {
+        if(msgrcv(msgid,&message,sizeof(message.msg_text),0,0)==-1)
+        {
+            perror("msgrcv failed");
             exit(1);
         }
-        if (strcmp(message.msg_text, "exit") == 0) {
-            printf("Received 'exit' message. Cleaning up...\n");
-            msgctl(msgid, IPC_RMID, NULL); // Remove queue
-            printf("Message queue deleted.\n");
+        if(strcmp(message.msg_text,"exit")==0)
+        {
             break;
         }
-        toUpperCase(message.msg_text);
-        printf("[Type: %ld] Message received: %s\n", message.msg_type, message.msg_text);
+        for(int i=0;message.msg_text[i]!='\0';i++)
+        {
+            message.msg_text[i]=toupper(message.msg_text[i]);
+        }
+        printf("\nReceived Message (Type %ld): %s\n", message.msg_type, message.msg_text);
     }
+    msgctl(msgid,IPC_RMID,NULL);
+     printf("\nMessage Queue destroyed. Receiver exiting...\n");
     return 0;
 }
