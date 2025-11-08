@@ -4,9 +4,7 @@
 #include<sys/ipc.h>
 #include<unistd.h>
 #include<string.h>
-
 #define SHM_SIZE 1024
-
 int main()
 {
     key_t key;
@@ -29,11 +27,10 @@ int main()
     fgets(str,SHM_SIZE,stdin);
     printf("\n[Server] Data written to shared memory: %s\n", str);
     printf("[Server] Waiting for client to read the data...\n");
-
     sleep(10);
     shmdt(str);
     shmctl(shmid,IPC_RMID,NULL);
-
+    
     printf("[Server] Shared memory detached and removed.\n");
     return 0;
 }
