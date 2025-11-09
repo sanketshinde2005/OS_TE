@@ -68,7 +68,7 @@ int main() {
     int requests[MAX] = {20, 229, 39, 450, 18, 145, 120, 380, 20, 250};
     int head = 185;
     int n = 10;
-    printf("SPPU OS LAB Q8.2 - Disk Scheduling Algorithms\n");
+    printf("Disk Scheduling Algorithms\n");
     printf("Requests: ");
     for (int i = 0; i < n; i++) printf("%d ", requests[i]);
     printf("\nInitial Head Position: %d\n", head);

@@ -30,7 +30,7 @@ void CSCAN(int requests[], int n, int head) {
     if (head != CYLINDERS - 1) {
         total += abs((CYLINDERS - 1) - head);
         head = 0;
-        total += CYLINDERS - 1; // jump from 499 to 0
+        total += CYLINDERS - 1;
     }
     for (int i = 0; i < pos; i++) {
         total += abs(temp[i] - head);
@@ -76,7 +76,7 @@ int main() {
     int requests[MAX] = {10, 229, 39, 400, 18, 145, 120, 480, 20, 250};
     int head = 85;
     int n = 10;
-    printf("SPPU OS LAB Q8.1 - Disk Scheduling Algorithms\n");
+    printf("Disk Scheduling Algorithms\n");
     printf("Requests: ");
     for (int i = 0; i < n; i++) printf("%d ", requests[i]);
     printf("\nInitial Head Position: %d\n", head);
