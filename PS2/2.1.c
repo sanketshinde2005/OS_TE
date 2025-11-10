@@ -40,7 +40,7 @@ int main() {
     printf("Enter %d integers:\n", n);
     for (int i = 0; i < n; i++)
         scanf("%d", &arr[i]);
-    pid_t pid = fork(); // Create child process
+    pid_t pid = fork();
     if (pid < 0) {
         perror("Fork failed");
         exit(1);
@@ -51,10 +51,10 @@ int main() {
         insertionSort(arr, n);
         printf("[Child] Sorted Array (Insertion Sort): ");
         displayArray(arr, n);
-        printf("[Child] Sleeping for 3 seconds to show Orphan state...\n");
-        sleep(3);
-        printf("[Child] After sleep, my PPID is: %d\n", getppid());
-        printf("[Child] Child process completed.\n");
+        printf("[Child] Sleeping 5 seconds to become ORPHAN...\n");
+        sleep(5);
+        printf("[Child] After sleep, new PPID = %d (ORPHAN confirmed)\n", getppid());
+        printf("[Child] Exiting now → will briefly become ZOMBIE.\n");
         exit(0);
     }
     else {
@@ -63,9 +63,8 @@ int main() {
         bubbleSort(arr, n);
         printf("[Parent] Sorted Array (Bubble Sort): ");
         displayArray(arr, n);
-        printf("[Parent] Waiting for child to complete...\n");
-        wait(NULL);  // Wait for child to avoid Zombie state
-        printf("[Parent] Child has finished. Parent process exiting.\n");
+        printf("[Parent] Exiting immediately → child becomes ORPHAN.\n");
+        exit(0);
     }
     return 0;
 }

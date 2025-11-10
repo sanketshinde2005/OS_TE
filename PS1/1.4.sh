@@ -33,7 +33,7 @@ delete_file() {
 list_files() {
     echo "Files in current directory:"
     echo "----------------------------------"
-    ls -lh --color=auto | awk '{print $9}' | tail -n +2
+    ls -l
     echo "----------------------------------"
 }
 while true; do

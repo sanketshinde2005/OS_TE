@@ -1,4 +1,3 @@
-// 3_1_fcfs_sjf_np_gantt.c
 #include <stdio.h>
 
 typedef struct {
