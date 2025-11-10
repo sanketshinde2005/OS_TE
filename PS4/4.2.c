@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <semaphore.h>
 #include <unistd.h>
-#define NUM_CHAIRS 3      // number of chairs in hallway
-#define NUM_STUDENTS 10   // number of students to simulate
+#define NUM_CHAIRS 3
+#define NUM_STUDENTS 10
 int waitingStudents = 0;
-sem_t students;     // students waiting for TA
-sem_t ta;           // TA ready to help
+sem_t students;
+sem_t ta;
 pthread_mutex_t mutex;
 void* student(void* id);
 void* teaching_assistant(void* arg);
@@ -15,7 +15,7 @@ void* student(void* id) {
     int student_id = *(int*)id;
     while (1) {
         printf("Student %d is programming and may need help later.\n", student_id);
-        sleep(rand() % 5 + 1);  // random time before seeking help
+        sleep(rand() % 5 + 1);
         pthread_mutex_lock(&mutex);
         if (waitingStudents < NUM_CHAIRS) {
             waitingStudents++;
@@ -25,7 +25,7 @@ void* student(void* id) {
             pthread_mutex_unlock(&mutex);
             sem_wait(&ta);
             printf("Student %d is getting help from TA.\n", student_id);
-            sleep(rand() % 3 + 1); // getting help
+            sleep(rand() % 3 + 1);
             printf("Student %d is done with TA and going back to programming.\n", student_id);
         } else {
             printf("No chair available. Student %d will come back later.\n", student_id);

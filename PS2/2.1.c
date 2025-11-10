@@ -40,31 +40,33 @@ int main() {
     printf("Enter %d integers:\n", n);
     for (int i = 0; i < n; i++)
         scanf("%d", &arr[i]);
-    pid_t pid = fork();
-    if (pid < 0) {
-        perror("Fork failed");
-        exit(1);
-    }
-    else if (pid == 0) {
-        printf("\n[Child] PID: %d | PPID: %d\n", getpid(), getppid());
-        printf("[Child] Performing Insertion Sort...\n");
+    pid_t pid1 = fork();
+    if (pid1 == 0) {
+        printf("\n[Child1 - ORPHAN] PID: %d | PPID: %d\n", getpid(), getppid());
         insertionSort(arr, n);
-        printf("[Child] Sorted Array (Insertion Sort): ");
+        printf("[Child1] After sorting: ");
         displayArray(arr, n);
-        printf("[Child] Sleeping 5 seconds to become ORPHAN...\n");
+        printf("[Child1] Sleeping to become ORPHAN...\n");
         sleep(5);
-        printf("[Child] After sleep, new PPID = %d (ORPHAN confirmed)\n", getppid());
-        printf("[Child] Exiting now → will briefly become ZOMBIE.\n");
+        printf("[Child1] After sleep → new PPID = %d (ORPHAN OK)\n", getppid());
         exit(0);
     }
-    else {
-        printf("\n[Parent] PID: %d | Child PID: %d\n", getpid(), pid);
-        printf("[Parent] Performing Bubble Sort...\n");
-        bubbleSort(arr, n);
-        printf("[Parent] Sorted Array (Bubble Sort): ");
-        displayArray(arr, n);
-        printf("[Parent] Exiting immediately → child becomes ORPHAN.\n");
+    pid_t pid2 = fork();
+    if (pid2 == 0) {
+        printf("\n[Child2 - ZOMBIE] PID: %d | PPID: %d\n", getpid(), getppid());
+        printf("[Child2] Exiting immediately → will become ZOMBIE.\n");
         exit(0);
     }
+    printf("\n[Parent] PID: %d | Child1: %d | Child2: %d\n", getpid(), pid1, pid2);
+    bubbleSort(arr, n);
+    printf("[Parent] Bubble Sort done: ");
+    displayArray(arr, n);
+    printf("\n[Parent] Sleeping 10 seconds so ZOMBIE is visible...\n");
+    sleep(10);
+    printf("\n[Parent] Reaping only Child2 (ZOMBIE)...\n");
+    waitpid(pid2, NULL, 0);
+    printf("[Parent] Now waiting for Child1 (ORPHAN reaped by systemd).\n");
+    waitpid(pid1, NULL, 0);
+    printf("[Parent] Done.\n");
     return 0;
 }

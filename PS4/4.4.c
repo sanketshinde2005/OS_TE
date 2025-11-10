@@ -3,36 +3,36 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
-sem_t db_access;          // semaphore for database access
-pthread_mutex_t mutex;    // mutex for reader count
-int reader_count = 0;     // number of readers currently accessing
-int shared_data = 0;      // the flight data (shared resource)
+sem_t db_access;
+pthread_mutex_t mutex; 
+int reader_count = 0;
+int shared_data = 0;
 void* reader(void* arg) {
     int id = *(int*)arg;
     while (1) {
         pthread_mutex_lock(&mutex);
         reader_count++;
         if (reader_count == 1)
-            sem_wait(&db_access);  // first reader blocks writers
+            sem_wait(&db_access);
         pthread_mutex_unlock(&mutex);
         printf("Reader %d: read shared_data = %d\n", id, shared_data);
         sleep(1);
         pthread_mutex_lock(&mutex);
         reader_count--;
         if (reader_count == 0)
-            sem_post(&db_access);  // last reader allows writers
+            sem_post(&db_access);
         pthread_mutex_unlock(&mutex);
-        sleep(rand() % 3);  // simulate random arrival time
+        sleep(rand() % 3);
     }
 }
 void* writer(void* arg) {
     int id = *(int*)arg;
     while (1) {
-        sem_wait(&db_access);   // only one writer (or readers group) can enter
-        shared_data++;          // modify shared data
+        sem_wait(&db_access);
+        shared_data++;
         printf("Writer %d: updated shared_data to %d\n", id, shared_data);
-        sem_post(&db_access);   // release database
-        sleep(rand() % 5);      // simulate delay
+        sem_post(&db_access);
+        sleep(rand() % 5);
     }
 }
 int main() {

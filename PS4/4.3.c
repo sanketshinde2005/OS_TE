@@ -6,8 +6,8 @@
 #include <time.h>
 #define FILE_NAME "shared.txt"
 pthread_mutex_t mutex;
-sem_t empty;  // file is empty — producer can write
-sem_t full;   // file is full — consumer can read
+sem_t empty;
+sem_t full;
 void* producer(void* arg);
 void* consumer(void* arg);
 void* producer(void* arg) {
