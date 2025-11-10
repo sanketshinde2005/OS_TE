@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <pthread.h>
+#include <stdio.h>
 #include <semaphore.h>
 #include <unistd.h>
 #define NUM_CHAIRS 3      // number of chairs in hallway
